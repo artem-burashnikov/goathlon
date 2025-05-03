@@ -15,7 +15,7 @@ func run(eventsReader io.Reader, logWriter io.Writer, cfg Config) {
 }
 
 func main() {
-	cfg := Must(loadConfig("config.conf"))
+	cfg := Must(loadConfig("example.conf"))
 
 	in, _ := os.Open("example")
 	defer in.Close()
