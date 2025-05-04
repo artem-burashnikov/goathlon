@@ -17,14 +17,14 @@ type Result struct {
 
 func (r Result) String() string {
 	var lapsStr string
-	for _, lap := range r.CompetitorState.Laps {
+	for _, lap := range r.Laps {
 		if lap.Duration == 0 {
 			lapsStr += "{,}, "
 		} else {
 			lapsStr += fmt.Sprintf("{%s, %.3f}, ", formatDuration(lap.Duration), calculateAverageSpeed(r.LapLen, lap.Duration))
 		}
 	}
-	if len(r.CompetitorState.Laps) > 0 {
+	if len(r.Laps) > 0 {
 		// Remove trailing ", "
 		lapsStr = lapsStr[:len(lapsStr)-2]
 	}
