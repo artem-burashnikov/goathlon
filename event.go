@@ -6,9 +6,7 @@ import (
 	"time"
 )
 
-type eventSource string
-
-// Incoming events
+// Incoming events (1-11)
 const (
 	_ = iota
 	EventRegistered
@@ -24,10 +22,10 @@ const (
 	EventCantContinue
 )
 
-// Outgoing events
+// Outgoing events (32-33)
 const (
-	EventDisqualified = 32
-	EventFinishedRace = 33
+	EventDisqualified = iota + 32
+	EventFinishedRace
 )
 
 type Event struct {
@@ -35,7 +33,6 @@ type Event struct {
 	ID           int
 	CompetitorID int
 	Extra        []string
-	Source       eventSource
 }
 
 func formatEventLog(e Event) string {
