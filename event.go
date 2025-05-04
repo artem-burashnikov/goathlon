@@ -7,8 +7,7 @@ import (
 )
 
 // Incoming events (1-11)
-// These constants represent various events that can occur during the competition.
-// They are used to identify and handle specific actions or states of competitors.
+// These constants are used to identify and handle specific actions or states of competitors.
 const (
 	_                        = iota
 	EventRegistered          // A competitor has registered for the competition
@@ -34,13 +33,13 @@ const (
 // Event represents an event that occurs during the competition.
 type Event struct {
 	Timestamp    time.Time // The time when the event occurred
-	ID           int       // The ID of the event (e.g., EventRegistered, EventFinishedLap)
-	CompetitorID int       // The ID of the competitor associated with the event
-	Extra        []string  // Additional information related to the event
+	ID           int
+	CompetitorID int
+	Extra        []string // Additional information related to the event
 }
 
-// formatEventLog formats an Event into a human-readable log message.
-func formatEventLog(e Event) string {
+// returns a human-readable string representation of an event.
+func (e Event) String() string {
 	ts := e.Timestamp.Format("15:04:05.000")
 	switch e.ID {
 	case EventRegistered:
