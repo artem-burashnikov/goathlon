@@ -154,6 +154,7 @@ func handleStartedRace(cfg Config, evt Event, st *CompetitorState) error {
 	// Add the first lap.
 	st.Laps = append(st.Laps, Lap{
 		StartTime: st.ActualStartTime,
+		Duration:  st.ActualStartTime.Sub(st.ScheduledStartTime),
 	})
 
 	return nil
@@ -167,7 +168,6 @@ func handleFinishedLap(cfg Config, evt Event, st *CompetitorState) error {
 
 	if len(st.Laps) == cfg.Laps {
 		st.FinishedRace = true
-		st.TotalRaceDuration = st.ActualStartTime.Sub(st.ScheduledStartTime)
 		for lap := range st.Laps {
 			st.TotalRaceDuration += st.Laps[lap].Duration
 		}
