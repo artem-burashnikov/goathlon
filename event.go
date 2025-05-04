@@ -10,13 +10,14 @@ type eventSource string
 
 // Incoming events
 const (
-	EventRegistered = iota + 1
+	_ = iota
+	EventRegistered
 	EventSetStartTime
 	EventOnStartLine
 	EventStartedRace
 	EventStartedFiringRange
 	EventShotHit
-	EventFinishFiringRange
+	EventFinishedFiringRange
 	EventStartedPenaltyLaps
 	EventFinishedPenaltyLaps
 	EventFinishedLap
@@ -52,7 +53,7 @@ func formatEventLog(e Event) string {
 		return fmt.Sprintf("[%s] The competitor(%d) is on the firing range(%s)", ts, e.CompetitorID, e.Extra[0])
 	case EventShotHit:
 		return fmt.Sprintf("[%s] The target(%s) has been hit by competitor(%d)", ts, e.Extra[0], e.CompetitorID)
-	case EventFinishFiringRange:
+	case EventFinishedFiringRange:
 		return fmt.Sprintf("[%s] The competitor(%d) left the firing range", ts, e.CompetitorID)
 	case EventStartedPenaltyLaps:
 		return fmt.Sprintf("[%s] The competitor(%d) entered the penalty laps", ts, e.CompetitorID)
