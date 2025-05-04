@@ -15,20 +15,11 @@ type Result struct {
 	FiringLines int
 }
 
-func formatDuration(d time.Duration) string {
-	hours := int(d.Hours())
-	minutes := int(d.Minutes()) % 60
-	seconds := int(d.Seconds()) % 60
-	milliseconds := int(d.Milliseconds()) % 1000
-
-	return fmt.Sprintf("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)
-}
-
 func (r Result) String() string {
-	lapsStr := "["
+	var lapsStr string
 	for _, lap := range r.CompetitorState.Laps {
 		if lap.Duration == 0 {
-			lapsStr += "{, }, "
+			lapsStr += "{,}, "
 		} else {
 			lapsStr += fmt.Sprintf("{%s, %.3f}, ", formatDuration(lap.Duration), calculateAverageSpeed(r.LapLen, lap.Duration))
 		}
@@ -37,7 +28,16 @@ func (r Result) String() string {
 		// Remove trailing ", "
 		lapsStr = lapsStr[:len(lapsStr)-2]
 	}
-	lapsStr += "]"
+
+	var penaltyStr string
+	if r.TotalPenaltyTime == 0 {
+		penaltyStr = "{,}"
+	} else {
+		penaltyStr += "{"
+		penaltyStr += formatDuration(r.TotalPenaltyTime)
+		penaltyStr += fmt.Sprintf(", %.3f", calculateAverageSpeed(r.PenaltyLen*r.TotalPenaltyLaps, r.TotalPenaltyTime))
+		penaltyStr += "}"
+	}
 
 	var status string
 	switch {
@@ -49,15 +49,29 @@ func (r Result) String() string {
 		status = formatDuration(r.TotalRaceDuration)
 	}
 
-	return fmt.Sprintf("[%s] %d %s {%s, %.3f} %d/%d",
+	return fmt.Sprintf("[%s] %d [%s] %s %d/%d",
 		status,
 		r.CompetitorID,
 		lapsStr,
-		formatDuration(r.TotalPenaltyTime),
-		calculateAverageSpeed(r.PenaltyLen*r.TotalPenaltyLaps, r.TotalPenaltyTime),
+		penaltyStr,
 		r.TotalHits,
 		r.FiringLines*NumberOfTargets,
 	)
+}
+
+func formatDuration(d time.Duration) string {
+	hours := d / time.Hour
+	d -= hours * time.Hour
+
+	minutes := d / time.Minute
+	d -= minutes * time.Minute
+
+	seconds := d / time.Second
+	d -= seconds * time.Second
+
+	milliseconds := d / time.Millisecond
+
+	return fmt.Sprintf("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)
 }
 
 func generateReport(w io.Writer, cfg Config, summary Summary) {
@@ -66,32 +80,20 @@ func generateReport(w io.Writer, cfg Config, summary Summary) {
 	var finishedRace []Result
 
 	// Sort competitors into categories based on their final state.
-	for _, v := range summary {
+	for _, competitorState := range summary {
+		competitorResult := Result{
+			CompetitorState: competitorState,
+			LapLen:          cfg.LapLen,
+			PenaltyLen:      cfg.PenaltyLen,
+			FiringLines:     cfg.FiringLines,
+		}
 		switch {
-		case v.Disqualified:
-			r := Result{
-				CompetitorState: v,
-				LapLen:          cfg.LapLen,
-				PenaltyLen:      cfg.PenaltyLen,
-				FiringLines:     cfg.FiringLines,
-			}
-			notStarted = append(notStarted, r)
-		case v.CantContinue:
-			r := Result{
-				CompetitorState: v,
-				LapLen:          cfg.LapLen,
-				PenaltyLen:      cfg.PenaltyLen,
-				FiringLines:     cfg.FiringLines,
-			}
-			cantContinue = append(cantContinue, r)
-		case v.FinishedRace:
-			r := Result{
-				CompetitorState: v,
-				LapLen:          cfg.LapLen,
-				PenaltyLen:      cfg.PenaltyLen,
-				FiringLines:     cfg.FiringLines,
-			}
-			finishedRace = append(finishedRace, r)
+		case competitorState.Disqualified:
+			notStarted = append(notStarted, competitorResult)
+		case competitorState.CantContinue:
+			cantContinue = append(cantContinue, competitorResult)
+		case competitorState.FinishedRace:
+			finishedRace = append(finishedRace, competitorResult)
 		}
 	}
 
