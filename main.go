@@ -6,23 +6,29 @@ import (
 	"os"
 )
 
-const buffSize = 100
+func Must[T any](obj T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
 
 func run(eventsReader io.Reader, logWriter io.Writer, cfg Config) {
-	eventCh := make(chan Event, buffSize)
-	go parseEvents(eventsReader, eventCh)
-	processEvents(logWriter, eventCh, cfg)
+	parsedEventCh := parseEvents(eventsReader, logWriter)
+
+	competitionSummary := processEvents(logWriter, cfg, parsedEventCh)
+
+	generateReport(logWriter, cfg, competitionSummary)
 }
 
 func main() {
-	cfg := Must(loadConfig("example.conf"))
+	cfgPath := os.Getenv("CONFIG_PATH")
 
-	in, _ := os.Open("example")
-	defer in.Close()
+	cfg := Must(loadConfig(cfgPath))
 
+	in := bufio.NewReader(os.Stdin)
 	out := bufio.NewWriter(os.Stdout)
 	defer out.Flush()
 
 	run(in, out, cfg)
-	generateReport(out, cfg)
 }
