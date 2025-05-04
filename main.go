@@ -6,15 +6,13 @@ import (
 	"os"
 )
 
-// Must is a helper function that ensures an operation succeeds.
-func Must[T any](obj T, err error) T {
+func must[T any](obj T, err error) T {
 	if err != nil {
 		panic(err)
 	}
 	return obj
 }
 
-// run orchestrates the main flow of the competition.
 func run(eventsReader io.Reader, logWriter io.Writer, cfg Config) {
 	eventCh := parseEvents(eventsReader, logWriter)
 	competitionSummary := processEvents(logWriter, cfg, eventCh)
@@ -24,7 +22,7 @@ func run(eventsReader io.Reader, logWriter io.Writer, cfg Config) {
 func main() {
 	cfgPath := os.Getenv("CONFIG_PATH")
 
-	cfg := Must(loadConfig(cfgPath))
+	cfg := must(loadConfig(cfgPath))
 
 	in := bufio.NewReader(os.Stdin)
 	out := bufio.NewWriter(os.Stdout)
