@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// Must is a helper function that ensures an operation succeeds.
 func Must[T any](obj T, err error) T {
 	if err != nil {
 		panic(err)
@@ -13,11 +14,10 @@ func Must[T any](obj T, err error) T {
 	return obj
 }
 
+// run orchestrates the main flow of the competition.
 func run(eventsReader io.Reader, logWriter io.Writer, cfg Config) {
 	eventCh := parseEvents(eventsReader, logWriter)
-
 	competitionSummary := processEvents(logWriter, cfg, eventCh)
-
 	generateReport(logWriter, cfg, competitionSummary)
 }
 

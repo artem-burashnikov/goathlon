@@ -7,34 +7,39 @@ import (
 )
 
 // Incoming events (1-11)
+// These constants represent various events that can occur during the competition.
+// They are used to identify and handle specific actions or states of competitors.
 const (
-	_ = iota
-	EventRegistered
-	EventSetStartTime
-	EventOnStartLine
-	EventStartedRace
-	EventStartedFiringRange
-	EventShotHit
-	EventFinishedFiringRange
-	EventStartedPenaltyLaps
-	EventFinishedPenaltyLaps
-	EventFinishedLap
-	EventCantContinue
+	_                        = iota
+	EventRegistered          // A competitor has registered for the competition
+	EventSetStartTime        // The start time for a competitor has been set
+	EventOnStartLine         // A competitor is on the start line
+	EventStartedRace         // A competitor has started the race
+	EventStartedFiringRange  // A competitor has entered the firing range
+	EventShotHit             // A competitor has hit a target
+	EventFinishedFiringRange // A competitor has left the firing range
+	EventStartedPenaltyLaps  // A competitor has started penalty laps
+	EventFinishedPenaltyLaps // A competitor has finished penalty laps
+	EventFinishedLap         // A competitor has completed a main lap
+	EventCantContinue        // A competitor cannot continue the race
 )
 
 // Outgoing events (32-33)
+// These constants represent events that are sent out as a result of certain actions or states.
 const (
-	EventDisqualified = iota + 32
-	EventFinishedRace
+	EventDisqualified = iota + 32 // A competitor has been disqualified
+	EventFinishedRace             // A competitor has finished the race
 )
 
+// Event represents an event that occurs during the competition.
 type Event struct {
-	Timestamp    time.Time
-	ID           int
-	CompetitorID int
-	Extra        []string
+	Timestamp    time.Time // The time when the event occurred
+	ID           int       // The ID of the event (e.g., EventRegistered, EventFinishedLap)
+	CompetitorID int       // The ID of the competitor associated with the event
+	Extra        []string  // Additional information related to the event
 }
 
+// formatEventLog formats an Event into a human-readable log message.
 func formatEventLog(e Event) string {
 	ts := e.Timestamp.Format("15:04:05.000")
 	switch e.ID {
