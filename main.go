@@ -14,9 +14,9 @@ func Must[T any](obj T, err error) T {
 }
 
 func run(eventsReader io.Reader, logWriter io.Writer, cfg Config) {
-	parsedEventCh := parseEvents(eventsReader, logWriter)
+	eventCh := parseEvents(eventsReader, logWriter)
 
-	competitionSummary := processEvents(logWriter, cfg, parsedEventCh)
+	competitionSummary := processEvents(logWriter, cfg, eventCh)
 
 	generateReport(logWriter, cfg, competitionSummary)
 }
