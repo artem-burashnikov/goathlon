@@ -28,12 +28,11 @@ func (t *Time) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)
 	layouts := []string{
 		"15:04:05.000", // Format with milliseconds
-		"15:04:05",     // Format without milliseconds
+		time.TimeOnly,  // Format without milliseconds
 	}
-	var err error
 	for _, layout := range layouts {
 		var parsed time.Time
-		parsed, err = time.Parse(layout, s)
+		parsed, err := time.Parse(layout, s)
 		if err == nil {
 			t.Time = parsed
 			return nil
@@ -50,12 +49,18 @@ type Duration struct {
 
 func (d *Duration) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)
-	t, err := time.Parse("15:04:05", s)
-	if err == nil {
-		d.Duration = time.Duration(t.Hour())*time.Hour +
-			time.Duration(t.Minute())*time.Minute +
-			time.Duration(t.Second())*time.Second
-		return nil
+	layouts := []string{
+		"15:04:05.000", // Format with milliseconds
+		time.TimeOnly,  // Format without milliseconds
+	}
+	for _, layout := range layouts {
+		t, err := time.Parse(layout, s)
+		if err == nil {
+			d.Duration = time.Duration(t.Hour())*time.Hour +
+				time.Duration(t.Minute())*time.Minute +
+				time.Duration(t.Second())*time.Second
+			return nil
+		}
 	}
 	return fmt.Errorf("invalid 'startDelta' format: %s", s)
 }
