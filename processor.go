@@ -6,9 +6,6 @@ import (
 	"time"
 )
 
-// Number of targets in the firing range.
-const NumberOfTargets = 5
-
 type CompetitorStatus int
 
 const (
@@ -16,6 +13,9 @@ const (
 	StatusDisqualified                  // Whether the competitor has been disqualified.
 	StatusCantContinue                  // Whether the competitor cannot continue the race.
 	StatusFinished                      // Whether the competitor has finished the race.
+
+	// Number of targets in the firing range.
+	NumberOfTargets = 5
 )
 
 // Summary represents a mapping of competitor IDs to their states.
