@@ -9,6 +9,15 @@ import (
 // Number of targets in the firing range.
 const NumberOfTargets = 5
 
+type CompetitorStatus int
+
+const (
+	StatusActive       CompetitorStatus = iota
+	StatusDisqualified                  // Whether the competitor has been disqualified.
+	StatusCantContinue                  // Whether the competitor cannot continue the race.
+	StatusFinished                      // Whether the competitor has finished the race.
+)
+
 // Summary represents a mapping of competitor IDs to their states.
 type Summary = map[int]*CompetitorState
 
@@ -35,10 +44,8 @@ type CompetitorState struct {
 	TotalPenaltyLaps   int
 	TotalHits          int
 	CurrentHits        int
-	Disqualified       bool      // Whether the competitor has been disqualified.
-	CantContinue       bool      // Whether the competitor cannot continue the race.
+	Status             CompetitorStatus
 	LastSeenTime       time.Time // The last time the competitor was seen.
-	FinishedRace       bool      // Whether the competitor has finished the race.
 }
 
 // processEvents logs events, updates competitor states, and generates summary data.
@@ -82,7 +89,7 @@ func getOrCreateState(summary Summary, id int) *CompetitorState {
 
 // shouldSkip determines whether a competitor's state should prevent further processing.
 func shouldSkip(state *CompetitorState) bool {
-	return state.Disqualified || state.CantContinue || state.FinishedRace
+	return state.Status != StatusActive
 }
 
 // updateState updates the state of a competitor based on an incoming event.
@@ -134,11 +141,14 @@ func handleStartedPenaltyLaps(evt Event, st *CompetitorState) error {
 
 // handleFinishedPenaltyLaps stops tracking the penalty laps and updates the total penalty time.
 func handleFinishedPenaltyLaps(evt Event, st *CompetitorState) error {
-	st.CurrentPenalty.FinishTime = evt.Timestamp
-	st.CurrentPenalty.Duration = evt.Timestamp.Sub(st.CurrentPenalty.StartTime)
-	st.TotalPenaltyTime += st.CurrentPenalty.Duration
-	st.CurrentPenalty = Penalty{}
-	return nil
+	if !st.CurrentPenalty.StartTime.IsZero() {
+		st.CurrentPenalty.FinishTime = evt.Timestamp
+		st.CurrentPenalty.Duration = evt.Timestamp.Sub(st.CurrentPenalty.StartTime)
+		st.TotalPenaltyTime += st.CurrentPenalty.Duration
+		st.CurrentPenalty = Penalty{}
+		return nil
+	}
+	return fmt.Errorf("trying to finish penalty laps that werer never started")
 }
 
 // handleStartedRace sets the actual start time and initializes the first lap for the competitor.
@@ -148,7 +158,7 @@ func handleStartedRace(cfg Config, evt Event, st *CompetitorState) error {
 	// Check if the competitor started within the allowed interval.
 	deadline := st.ScheduledStartTime.Add(cfg.StartDelta.Duration)
 	if evt.Timestamp.Before(st.ScheduledStartTime) || evt.Timestamp.After(deadline) {
-		st.Disqualified = true
+		st.Status = StatusDisqualified
 	}
 
 	// Add the first lap.
@@ -167,7 +177,7 @@ func handleFinishedLap(cfg Config, evt Event, st *CompetitorState) error {
 	st.Laps[len(st.Laps)-1].Duration += evt.Timestamp.Sub(st.Laps[len(st.Laps)-1].StartTime)
 
 	if len(st.Laps) == cfg.Laps {
-		st.FinishedRace = true
+		st.Status = StatusFinished
 		for lap := range st.Laps {
 			st.TotalRaceDuration += st.Laps[lap].Duration
 		}
@@ -189,14 +199,14 @@ func handleShotHit(st *CompetitorState) error {
 
 // handleCantContinue marks the competitor as unable to continue and updates the last seen time.
 func handleCantContinue(evt Event, st *CompetitorState) error {
-	st.CantContinue = true
+	st.Status = StatusCantContinue
 	st.LastSeenTime = evt.Timestamp
 	return nil
 }
 
 // maybeGenerateEvent creates disqualification or race completion events if applicable.
 func maybeGenerateEvent(incoming Event, st *CompetitorState) (Event, bool) {
-	if st.Disqualified {
+	if st.Status == StatusDisqualified {
 		return Event{
 			Timestamp:    incoming.Timestamp,
 			ID:           EventDisqualified,
@@ -204,7 +214,7 @@ func maybeGenerateEvent(incoming Event, st *CompetitorState) (Event, bool) {
 			Extra:        incoming.Extra,
 		}, true
 	}
-	if st.FinishedRace {
+	if st.Status == StatusFinished {
 		return Event{
 			Timestamp:    incoming.Timestamp,
 			ID:           EventFinishedRace,

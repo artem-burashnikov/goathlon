@@ -40,12 +40,12 @@ func (r Result) String() string {
 	}
 
 	var status string
-	switch {
-	case r.Disqualified:
+	switch r.Status {
+	case StatusDisqualified:
 		status = "NotStarted"
-	case r.CantContinue:
+	case StatusCantContinue:
 		status = "NotFinished"
-	case r.FinishedRace:
+	case StatusFinished:
 		status = formatDuration(r.TotalRaceDuration)
 	}
 
@@ -87,12 +87,12 @@ func generateReport(w io.Writer, cfg Config, summary Summary) {
 			PenaltyLen:      cfg.PenaltyLen,
 			FiringLines:     cfg.FiringLines,
 		}
-		switch {
-		case competitorState.Disqualified:
+		switch competitorState.Status {
+		case StatusDisqualified:
 			notStarted = append(notStarted, competitorResult)
-		case competitorState.CantContinue:
+		case StatusCantContinue:
 			cantContinue = append(cantContinue, competitorResult)
-		case competitorState.FinishedRace:
+		case StatusFinished:
 			finishedRace = append(finishedRace, competitorResult)
 		}
 	}
