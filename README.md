@@ -9,13 +9,18 @@ A prototype system for processing and analyzing biathlon competition events.
 ### Prerequisites
 
 - **Go**: v1.20 or newer.
+- **Make** (optional, for simplified commands)
 
 ### Usage
+
+#### Basic setup
 
 ```bash
 git clone https://github.com/artem-burashnikov/goathlon.git
 cd goathlon
 ```
+
+#### Running program
 
 You need to complete a few steps in order to run the program:
 
@@ -27,6 +32,18 @@ CONFIG_PATH="test/testdata/single/config.json" go run . < test/testdata/single/e
 ```
 
 Take a look at [examples](/examples/README.md).
+
+#### Running tests
+
+```bash
+make test
+```
+
+#### Generate coverage report
+
+```bash
+make coverage
+```
 
 ## 📜 License
 
