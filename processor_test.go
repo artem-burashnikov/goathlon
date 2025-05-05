@@ -95,6 +95,55 @@ func TestProcessEvents(t *testing.T) {
 		assert.Equal(t, StatusFinished, s.Status)
 		assert.Equal(t, 20*time.Minute, s.TotalRaceDuration)
 	})
+
+	t.Run("penalty laps", func(t *testing.T) {
+		inCh := make(chan Event)
+		go func() {
+			defer close(inCh)
+			inCh <- Event{ID: EventStartedPenaltyLaps, CompetitorID: 1, Timestamp: must(time.Parse(time.TimeOnly, "09:00:30"))}
+			inCh <- Event{ID: EventFinishedPenaltyLaps, CompetitorID: 1, Timestamp: must(time.Parse(time.TimeOnly, "09:10:30"))}
+		}()
+
+		var buf bytes.Buffer
+		summary := processEvents(&buf, cfg, inCh)
+
+		assert.Len(t, summary, 1)
+		s := summary[1]
+		assert.Equal(t, 5, s.TotalPenaltyLaps)
+		assert.Equal(t, 0, s.CurrentHits)
+		assert.Equal(t, 10*time.Minute, s.TotalPenaltyTime)
+	})
+
+	t.Run("can't continue", func(t *testing.T) {
+		now := time.Now()
+		later := now.Add(10 * time.Minute)
+		inCh := make(chan Event)
+		go func() {
+			defer close(inCh)
+			inCh <- Event{ID: EventCantContinue, CompetitorID: 1, Timestamp: later, Extra: []string{"Took", "wrong", "turn"}}
+		}()
+
+		var buf bytes.Buffer
+		summary := processEvents(&buf, cfg, inCh)
+		assert.Len(t, summary, 1)
+		s := summary[1]
+		assert.Equal(t, StatusCantContinue, s.Status)
+		assert.Equal(t, later, s.LastSeenTime)
+	})
+
+	t.Run("impossible event", func(t *testing.T) {
+		now := time.Now()
+		inCh := make(chan Event)
+		go func() {
+			defer close(inCh)
+			inCh <- Event{ID: -1, CompetitorID: 1, Timestamp: now}
+		}()
+
+		var buf bytes.Buffer
+		summary := processEvents(&buf, cfg, inCh)
+		assert.Len(t, summary, 1)
+		assert.Contains(t, buf.String(), "IMPOSSIBLE")
+	})
 }
 
 func TestUpdateState(t *testing.T) {
