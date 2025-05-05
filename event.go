@@ -21,12 +21,10 @@ const (
 	EventFinishedPenaltyLaps // A competitor has finished penalty laps
 	EventFinishedLap         // A competitor has completed a main lap
 	EventCantContinue        // A competitor cannot continue the race
-)
 
-// Outgoing events (32-33)
-// These constants represent events that are sent out as a result of certain actions or states.
-const (
-	EventDisqualified = iota + 32 // A competitor has been disqualified
+	// Outgoing events (32-33)
+	// These constants represent events that are sent out as a result of certain actions or states.
+	EventDisqualified = iota + 20 // A competitor has been disqualified
 	EventFinishedRace             // A competitor has finished the race
 )
 
